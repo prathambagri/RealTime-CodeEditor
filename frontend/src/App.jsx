@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import io from "socket.io-client";
 import Editor from "@monaco-editor/react";
+import {v4 as uuid} from 'uuid';
 
-const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
+// const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
+const socket = io("http://localhost:5000");
 
 const App = () => {
   const [joined, setJoined] = useState(false);
@@ -95,9 +97,16 @@ const App = () => {
     socket.emit("languageChange", { roomId, language: newLanguage });
   };
 
+  const [userInput, setUserInput] = useState("")
+
   const runCode = ()=> {
-    socket.emit("compileCode",{code, roomId, language, version});
+    socket.emit("compileCode",{code, roomId, language, version, input: userInput});
   };
+
+  const createRoomId =()=>{
+    const roomId = uuid();
+    setRoomId(roomId);
+  }
 
   if (!joined) {
     return (
@@ -110,17 +119,53 @@ const App = () => {
             value={roomId}
             onChange={(e) => setRoomId(e.target.value)}
           />
+          <button onClick={createRoomId} className="create-room-btn">
+            Create New Room
+          </button>
           <input
             type="text"
             placeholder="Your Name"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
           />
-          <button onClick={joinRoom}>Join Room</button>
+          <button onClick={joinRoom} className="join-room">Join Room</button>
         </div>
       </div>
     );
   }
+
+  const exportCode = () => {
+  if (!code) {
+    alert("No code to export!");
+    return;
+  }
+
+  let extension = "txt";
+  switch (language) {
+    case "javascript":
+      extension = "js";
+      break;
+    case "python":
+      extension = "py";
+      break;
+    case "java":
+      extension = "java";
+      break;
+    case "cpp":
+      extension = "cpp";
+      break;
+    default:
+      extension = "txt";
+  }
+
+  const blob = new Blob([code], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `code.${extension}`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+};
+
 
   return (
     <div className="editor-container">
@@ -152,6 +197,9 @@ const App = () => {
         <button className="leave-button" onClick={leaveRoom}>
           Leave Room
         </button>
+        <button className="export-btn" onClick={exportCode}>
+          Export Code
+        </button>
       </div>
 
       <div className="editor-wrapper">
@@ -166,6 +214,12 @@ const App = () => {
             minimap: { enabled: false },
             fontSize: 14,
           }}
+        />
+        <textarea
+          className="input-console"
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
+          placeholder="Provide Input here ..."
         />
         <button className="run-btn" onClick={runCode}>Execute</button>
         <textarea 
