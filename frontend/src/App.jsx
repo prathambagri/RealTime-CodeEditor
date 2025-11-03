@@ -1,12 +1,11 @@
-
 import { useEffect, useState } from "react";
 import "./App.css";
 import io from "socket.io-client";
 import Editor from "@monaco-editor/react";
 import {v4 as uuid} from 'uuid';
 
-const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
-// const socket = io("http://localhost:5000");
+// const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
+const socket = io("http://localhost:5000");
 
 const App = () => {
   const [joined, setJoined] = useState(false);
@@ -71,12 +70,18 @@ const App = () => {
   };
 
   const leaveRoom = () => {
+    const confirmLeave = window.confirm("Are you sure you want to leave the room?");
+    if (!confirmLeave) return;// if user cancels, do nothing
+
+
     socket.emit("leaveRoom");
     setJoined(false);
     setRoomId("");
     setUserName("");
     setCode("// start code here");
     setLanguage("javascript");
+    
+    alert("You have left the room successfully.");
   };
 
   const copyRoomId = () => {
@@ -177,10 +182,10 @@ const App = () => {
           </button>
           {copySuccess && <span className="copy-success">{copySuccess}</span>}
         </div>
-        <h3>Users in Room:</h3>
+        <h3>Users in Room: ({users.length})</h3>
         <ul>
           {users.map((user, index) => (
-            <li key={index}>{user.slice(0, 8)}...</li>
+            <li key={index}>{user.length > 8 ? `${user.slice(0, 8)}...` : user}</li>
           ))}
         </ul>
         <p className="typing-indicator">{typing}</p>
@@ -215,13 +220,16 @@ const App = () => {
             fontSize: 14,
           }}
         />
+        <div style={{ display: "flex", justifyContent: "left", margin: "10px 0" }}>
+        <button className="run-btn" onClick={runCode}>Execute</button>
+        </div>
         <textarea
           className="input-console"
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
           placeholder="Provide Input here ..."
         />
-        <button className="run-btn" onClick={runCode}>Execute</button>
+        
         <textarea 
           className="output-console" 
           value={outPut} 
