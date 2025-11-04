@@ -4,8 +4,8 @@ import io from "socket.io-client";
 import Editor from "@monaco-editor/react";
 import {v4 as uuid} from 'uuid';
 
-const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
-// const socket = io("http://localhost:5000");
+// const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
+const socket = io("http://localhost:5000");
 
 const App = () => {
   const [joined, setJoined] = useState(false);
@@ -159,6 +159,10 @@ const App = () => {
   if (!joined) {
     return (
       <div className="join-container">
+        <header className="welcome-header">
+          <h1>Welcome to <span>CodeRillix</span></h1>
+          <p className="tagline">Collaborate, Code, and Compile in Real Time</p>
+        </header>
         <div className="join-form">
           <h1>Join Code Room</h1>
           <input
