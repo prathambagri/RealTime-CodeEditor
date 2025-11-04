@@ -4,8 +4,8 @@ import io from "socket.io-client";
 import Editor from "@monaco-editor/react";
 import {v4 as uuid} from 'uuid';
 
-const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
-// const socket = io("http://localhost:5000");
+// const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
+const socket = io("http://localhost:5000");
 
 const App = () => {
   const [joined, setJoined] = useState(false);
@@ -19,6 +19,24 @@ const App = () => {
   const [outPut, setOutPut] = useState("");
   const [version, setVersion] = useState("*");
 
+  // 🧠 Auto-restore previous session (room, username, code)
+  useEffect(() => {
+    const savedRoomId = localStorage.getItem("roomId");
+    const savedUserName = localStorage.getItem("userName");
+    const savedCode = localStorage.getItem("savedCode");
+    const savedLanguage = localStorage.getItem("savedLanguage");
+
+    if (savedRoomId && savedUserName) {
+      socket.emit("join", { roomId: savedRoomId, userName: savedUserName });
+      setRoomId(savedRoomId);
+      setUserName(savedUserName);
+      setLanguage(savedLanguage || "javascript");
+      setCode(savedCode || "// start code here");
+      setJoined(true);
+    }
+  }, []);
+
+
   useEffect(() => {
     socket.on("userJoined", (users) => {
       setUsers(users);
@@ -26,6 +44,7 @@ const App = () => {
 
     socket.on("codeUpdate", (newCode) => {
       setCode(newCode);
+      localStorage.setItem("savedCode", newCode);// Update localStorage
     });
 
     socket.on("userTyping", (user) => {
@@ -66,6 +85,9 @@ const App = () => {
     if (roomId && userName) {
       socket.emit("join", { roomId, userName });
       setJoined(true);
+      // Save session info to localStorage
+      localStorage.setItem("roomId", roomId);
+      localStorage.setItem("userName", userName);
     }
   };
 
@@ -80,6 +102,12 @@ const App = () => {
     setUserName("");
     setCode("// start code here");
     setLanguage("javascript");
+
+    // 🧹 Clear localStorage
+    localStorage.removeItem("roomId");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("savedCode");
+    localStorage.removeItem("savedLanguage");
     
     alert("You have left the room successfully.");
   };
@@ -94,12 +122,17 @@ const App = () => {
     setCode(newCode);
     socket.emit("codeChange", { roomId, code: newCode });
     socket.emit("typing", { roomId, userName });
+
+    // 💾 Save code locally
+    localStorage.setItem("savedCode", newCode);
   };
 
   const handleLanguageChange = (e) => {
     const newLanguage = e.target.value;
     setLanguage(newLanguage);
     socket.emit("languageChange", { roomId, language: newLanguage });
+
+    localStorage.setItem("savedLanguage", newLanguage);
   };
 
   const [userInput, setUserInput] = useState("")
@@ -112,6 +145,16 @@ const App = () => {
     const roomId = uuid();
     setRoomId(roomId);
   }
+
+  const saveCode = () => {
+  if (!roomId) {
+    alert("No room joined!");
+    return;
+  }
+  socket.emit("saveCode", { roomId, code, language });
+  alert("Code saved successfully!");
+};
+
 
   if (!joined) {
     return (
@@ -202,6 +245,11 @@ const App = () => {
         <button className="leave-button" onClick={leaveRoom}>
           Leave Room
         </button>
+
+        <button className="save-btn" onClick={saveCode}>
+          Save Code
+        </button>
+
         <button className="export-btn" onClick={exportCode}>
           Export Code
         </button>

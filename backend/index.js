@@ -9,21 +9,21 @@ const app = express();
 
 const server = http.createServer(app);
 
-const url = `https://realtime-collaborative-codeeditor-1p3z.onrender.com`;
-const interval = 30000;
+// const url = `https://realtime-collaborative-codeeditor-1p3z.onrender.com`;
+// const interval = 30000;
 
-function reloadWebsite() {
-  axios
-    .get(url)
-    .then((response) => {
-      console.log("website reloded");
-    })
-    .catch((error) => {
-      console.error(`Error : ${error.message}`);
-    });
-}
+// function reloadWebsite() {
+//   axios
+//     .get(url)
+//     .then((response) => {
+//       console.log("website reloded");
+//     })
+//     .catch((error) => {
+//       console.error(`Error : ${error.message}`);
+//     });
+// }
 
-setInterval(reloadWebsite, interval);
+// setInterval(reloadWebsite, interval);
 
 
 const io = new Server(server, {
@@ -92,6 +92,15 @@ io.on("connection", (socket) => {
     rooms.get(roomId).language = language; // store it
     }
     io.to(roomId).emit("languageUpdate", language);
+  });
+
+  socket.on("saveCode", ({ roomId, code, language }) => {
+    if (rooms.has(roomId)) {
+      const room = rooms.get(roomId);
+      room.code = code;
+      room.language = language;
+      console.log(`Code saved for room: ${roomId}`);
+    }
   });
 
   socket.on("compileCode", async ({ code, roomId, language, version, input }) => {
