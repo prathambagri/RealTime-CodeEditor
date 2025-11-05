@@ -3,7 +3,7 @@ import "./App.css";
 import io from "socket.io-client";
 import Editor from "@monaco-editor/react";
 import {v4 as uuid} from 'uuid';
-import logo from './public/CR_logo.png';
+import logo from './assets/CR_logo.png';
 
 const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
 // const socket = io("http://localhost:5000");
