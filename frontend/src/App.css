@@ -90,6 +90,25 @@ body::after {
   font-weight: 400;
 }
 
+.logo-inline {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 8px rgba(91, 192, 190, 0.4));
+  animation: logoFloat 3s ease-in-out infinite alternate;
+}
+
+@keyframes logoFloat {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+
+
 
 .join-container {
   display: flex;
@@ -373,4 +392,36 @@ textarea::-webkit-scrollbar {
 textarea::-webkit-scrollbar-thumb {
   background-color: #3a506b;
   border-radius: 6px;
+}
+
+/* sidebar header */
+.brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(91, 192, 190, 0.25);
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(91, 192, 190, 0.4));
+  transition: transform 0.3s ease;
+}
+
+.sidebar-logo:hover {
+  transform: rotate(10deg) scale(1.05);
+}
+
+.brand-header h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #8e44ad, #5bc0be);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.5px;
 }
