@@ -3,6 +3,7 @@ import "./App.css";
 import io from "socket.io-client";
 import Editor from "@monaco-editor/react";
 import {v4 as uuid} from 'uuid';
+import logo from './public/CR_logo.png';
 
 const socket = io("https://realtime-collaborative-codeeditor-1p3z.onrender.com");
 // const socket = io("http://localhost:5000");
@@ -162,7 +163,7 @@ const App = () => {
         <header className="welcome-header">
           <h1>Welcome to 
             <span>
-            <img src="\public\CR_logo.png" alt="Coderillix Logo" className="logo-inline" />
+            <img src={logo} alt="Coderillix Logo" className="logo-inline" />
             CodeRillix
             </span>
             </h1>
@@ -228,7 +229,7 @@ const App = () => {
     <div className="editor-container">
       <div className="sidebar">
         <div className="brand-header">
-          <img src="\public\CR_logo.png" alt="CodeRillix Logo" className="sidebar-logo" />
+          <img src={logo} alt="CodeRillix Logo" className="sidebar-logo" />
           <h1>CodeRillix</h1>
         </div>
         <div className="room-info">
