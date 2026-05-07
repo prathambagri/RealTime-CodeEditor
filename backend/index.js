@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -25,7 +26,6 @@ function reloadWebsite() {
 
 setInterval(reloadWebsite, interval);
 
-
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -44,7 +44,10 @@ io.on("connection", (socket) => {
     if (currentRoom) {
       socket.leave(currentRoom);
       rooms.get(currentRoom).users.delete(currentUser);
-      io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom).users));
+      io.to(currentRoom).emit(
+        "userJoined",
+        Array.from(rooms.get(currentRoom).users),
+      );
     }
 
     currentRoom = roomId;
@@ -53,7 +56,12 @@ io.on("connection", (socket) => {
     socket.join(roomId);
 
     if (!rooms.has(roomId)) {
-      rooms.set(roomId, {users: new Set(), code:"// start code here", output:"", language: "javascript",  });
+      rooms.set(roomId, {
+        users: new Set(),
+        code: "// start code here",
+        output: "",
+        language: "javascript",
+      });
     }
 
     rooms.get(roomId).users.add(userName);
@@ -65,7 +73,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("codeChange", ({ roomId, code }) => {
-    if(rooms.has(roomId)) {
+    if (rooms.has(roomId)) {
       rooms.get(roomId).code = code;
     }
     socket.to(roomId).emit("codeUpdate", code);
@@ -74,7 +82,10 @@ io.on("connection", (socket) => {
   socket.on("leaveRoom", () => {
     if (currentRoom && currentUser) {
       rooms.get(currentRoom).users.delete(currentUser);
-      io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom).users));
+      io.to(currentRoom).emit(
+        "userJoined",
+        Array.from(rooms.get(currentRoom).users),
+      );
 
       socket.leave(currentRoom);
 
@@ -89,7 +100,7 @@ io.on("connection", (socket) => {
 
   socket.on("languageChange", ({ roomId, language }) => {
     if (rooms.has(roomId)) {
-    rooms.get(roomId).language = language; // store it
+      rooms.get(roomId).language = language; // store it
     }
     io.to(roomId).emit("languageUpdate", language);
   });
@@ -103,32 +114,60 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("compileCode", async ({ code, roomId, language, version, input }) => {
-    if (rooms.has(roomId)) {
-      const room = rooms.get(roomId);
-      const response = await axios.post(
-        "https://emkc.org/api/v2/piston/execute",
-        {
-          language,
-          version,
-          files: [
-            {
-              content: code,
-            },
-          ],
-          stdin: input,
-        }
-      );
+  socket.on(
+    "compileCode",
+    async ({ code, roomId, language, version, input }) => {
+      if (rooms.has(roomId)) {
+        const room = rooms.get(roomId);
+        try {
+          const languageMap = {
+            javascript: { language: "nodejs", versionIndex: "4" },
+            python: { language: "python3", versionIndex: "4" },
+            java: { language: "java", versionIndex: "4" },
+            c: { language: "c", versionIndex: "5" },
+            cpp: { language: "cpp17", versionIndex: "1" },
+          };
 
-      room.output = response.data.run.output;
-      io.to(roomId).emit("codeResponse", response.data);
-    }
-  });
+          const lang = languageMap[language.toLowerCase()];
+
+          if (!lang) {
+            socket.emit("codeResponse", {
+              run: { output: `Language '${language}' not supported.` },
+            });
+            return;
+          }
+
+          const response = await axios.post(
+            "https://api.jdoodle.com/v1/execute",
+            {
+              clientId: process.env.JDOODLE_CLIENT_ID,
+              clientSecret: process.env.JDOODLE_CLIENT_SECRET,
+              script: code,
+              stdin: input || "",
+              language: lang.language,
+              versionIndex: lang.versionIndex,
+            },
+          );
+
+          const output = response.data.output || "No output";
+          room.output = output;
+          io.to(roomId).emit("codeResponse", { run: { output } });
+        } catch (err) {
+          socket.emit("codeResponse", {
+            run: { output: "Error: " + err.message },
+          });
+        }
+      }
+    },
+  );
 
   socket.on("disconnect", () => {
     if (currentRoom && currentUser) {
       rooms.get(currentRoom).users.delete(currentUser);
-      io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom).users));
+      io.to(currentRoom).emit(
+        "userJoined",
+        Array.from(rooms.get(currentRoom).users),
+      );
     }
     console.log("user Disconnected");
   });
